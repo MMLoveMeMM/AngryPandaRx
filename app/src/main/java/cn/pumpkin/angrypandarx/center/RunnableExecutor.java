@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import cn.pumpkin.angrypandarx.center.core.ThreadCenter;
+import cn.pumpkin.angrypandarx.center.handle.EnhanceHandler;
 
 public class RunnableExecutor<T> {
 
@@ -79,7 +80,7 @@ public class RunnableExecutor<T> {
 						final T tts = t;
 						if (enable) {
 							// 切换到android主线程上去
-							Handler handler = new Handler(ThreadCenter.getInstance().getMainLooper()){
+							EnhanceHandler handler = new EnhanceHandler(0){
 								@Override
 								public void handleMessage(Message msg) {
 									super.handleMessage(msg);

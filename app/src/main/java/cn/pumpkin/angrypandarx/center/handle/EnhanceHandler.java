@@ -60,17 +60,11 @@ public class EnhanceHandler extends Handler {
      * @param r      任务
      * @param delayMillis 顺序 : delay时间,token : 一定要带上自己的令牌token,不要去删除消息队列中其他人的待处理消息
      */
-    public boolean postDelayed(Runnable r, int delayMillis) {
+    public boolean postDelayedByToken(Runnable r, long delayMillis) {
         return postAtTime(r, token,android.os.SystemClock.uptimeMillis() + delayMillis);
     }
 
-    public void removeCallbacksAndMessages() {
-        if (token != null) {
-            removeCallbacksAndMessages(token);
-        }
-    }
-
-    public void removeCallbacksAndMessages(String mask) {
+    public void removeCallbacksAndMessagesByToken(String mask) {
         if (token != null) {
             removeCallbacksAndMessages(token);
         }
