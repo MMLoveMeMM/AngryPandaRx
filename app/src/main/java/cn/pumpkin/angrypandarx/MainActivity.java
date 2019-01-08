@@ -26,6 +26,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String TAG = MainActivity.class.getName();
 
     private static final int NUM_CNT = 100;
+    /**
+     * 这个里面在做压力测试的时候为什么要加延时100ms
+     * 这是因为线程池最大的任务量是Runtime.getRuntime().availableProcessors() * 2 + 1 = 17(在我的华为平板上是这个值)
+     * 如果增加的任务数量太快,会有很多任务会被抛弃
+     * */
     private static final int DELAY_TIME = 100;
 
     private Button mBtn;
