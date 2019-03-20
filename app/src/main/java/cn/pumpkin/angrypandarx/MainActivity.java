@@ -1,19 +1,32 @@
 package cn.pumpkin.angrypandarx;
 
+import android.content.Context;
+import android.graphics.PixelFormat;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Toast;
+
+import java.util.concurrent.ArrayBlockingQueue;
 
 import cn.pumpkin.angrypandarx.center.AbstractTaskWithResult;
+import cn.pumpkin.angrypandarx.center.FxConsumer;
 import cn.pumpkin.angrypandarx.center.FxSubcribe;
 import cn.pumpkin.angrypandarx.center.FxObserver;
 import cn.pumpkin.angrypandarx.center.MonitorThread;
+import cn.pumpkin.angrypandarx.center.RunnableConsumerImpl;
 import cn.pumpkin.angrypandarx.center.RunnableExecutor;
 import cn.pumpkin.angrypandarx.center.handle.EnhanceHandler;
 import cn.pumpkin.angrypandarx.center.watchdog.Watchdog;
+import cn.pumpkin.angrypandarx.ui.WindowUtils;
+
+import static cn.pumpkin.angrypandarx.center.RunnableConsumerImpl.THTYPE.TH_CORE;
+
 /**
  * @author: zhibao.Liu
  * @version:
@@ -30,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * 这个里面在做压力测试的时候为什么要加延时100ms
      * 这是因为线程池最大的任务量是Runtime.getRuntime().availableProcessors() * 2 + 1 = 17(在我的华为平板上是这个值)
      * 如果增加的任务数量太快,会有很多任务会被抛弃
-     * */
+     */
     private static final int DELAY_TIME = 100;
 
     private Button mBtn;
@@ -39,6 +52,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mBtn3;
     private Button mBtn4;
     private Button mBtn5;
+
+    private Button mAlertBtn;
+
+    private Button mThreadBtn;
 
     private int count = 0;
 
@@ -50,8 +67,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         int id = v.getId();
 
-        switch (id){
-            case R.id.btn:{
+        switch (id) {
+            case R.id.btn: {
                 RunnableExecutor.create(new FxSubcribe() {
                     @Override
                     public void callTask() {
@@ -59,8 +76,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }).exeFunc();
             }
-                break;
-            case R.id.btn5:{
+            break;
+            case R.id.btn5: {
                 for (int i = 0; i < NUM_CNT; i++) {
 
                     if (i % 10 == 0) {
@@ -98,8 +115,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 }
             }
-                break;
-            case R.id.btn4:{
+            break;
+            case R.id.btn4: {
                 for (int i = 0; i < NUM_CNT; i++) {
 
                     if (i % 10 == 0) {
@@ -142,8 +159,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             });
                 }
             }
-                break;
-            case R.id.btn3:{
+            break;
+            case R.id.btn3: {
                 for (int i = 0; i < NUM_CNT; i++) {
 
                     RunnableExecutor.create(new FxSubcribe() {
@@ -155,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 }
             }
-                break;
+            break;
             default:
                 break;
         }
@@ -174,10 +191,71 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private EnhanceHandler mHandler = new EnhanceHandler();
 
+    private ArrayBlockingQueue<String> mArrayBlockingQueue = new ArrayBlockingQueue<>(100);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        mThreadBtn = (Button) findViewById(R.id.thread);
+        mThreadBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                for (int i = 0; i < 50; i++) {
+                    mArrayBlockingQueue.offer("liuzhibao " + count++);
+                }
+
+                RunnableConsumerImpl consumer1 = new RunnableConsumerImpl(new FxConsumer() {
+                    @Override
+                    public void callTask(Object queue) {
+
+                    }
+                }).start();
+
+                RunnableConsumerImpl consumer = new RunnableConsumerImpl<>
+                        (mArrayBlockingQueue, new FxConsumer<ArrayBlockingQueue<String>>() {
+                            @Override
+                            public void callTask(ArrayBlockingQueue<String> queue) {
+
+                            }
+                        }
+                        /*new FxConsumer<ArrayBlockingQueue<String>>() {
+                            @Override
+                            public void callTask(ArrayBlockingQueue<String> queue) {
+
+                            }
+                        }*/
+                        /*new FxConsumer<ArrayBlockingQueue<String>>() {
+                    @Override
+                    public void callTask(ArrayBlockingQueue<String> queue) {
+                        try {
+                            String content = queue.take();
+                            Log.e(TAG, "consumer : " + content);
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }*/).start(TH_CORE);
+
+                try {
+                    Thread.sleep(5000);
+                    consumer.pause();
+                    Thread.sleep(5000);
+                    consumer.resume();
+                    Thread.sleep(5000);
+                    consumer.finish();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        });
+
 
         mThread = new MonitorThread();
         mThread.start();
@@ -283,7 +361,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+        // Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+
+        mAlertBtn = (Button) findViewById(R.id.alert);
+
+        mAlertBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!windowsEnable && !WindowUtils.isShown) {
+                    WindowUtils.showPopupWindow(getApplicationContext());
+                } else {
+                    WindowUtils.hidePopupWindow();
+                }
+                windowsEnable = !windowsEnable;
+            }
+        });
+
     }
+
+    private boolean windowsEnable = false;
 
     private synchronized void divTask() {
 

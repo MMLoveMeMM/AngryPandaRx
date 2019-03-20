@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <cn.pumpkin.angrypandarx.ui.ForeverMarqueeTextView
+        android:id="@+id/toasttips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|center"
+        android:ellipsize="marquee"
+        android:focusable="true"
+        android:gravity="left|center"
+        android:singleLine="true"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:minHeight="40dp"
+        android:scrollHorizontally="true"
+        android:textColor="@color/colorAccent"
+        android:textScaleX="1.0"
+        android:textSize="13sp"
+        android:text="hello liuzhibao"/>
+
+</LinearLayout>
